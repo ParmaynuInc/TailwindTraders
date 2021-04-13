@@ -51,8 +51,9 @@ jobs:
         name: drop
         path: "./Source/Tailwind.Traders.Web/staging"
     
-  deploy:
-    environment: Production
+  deployStaging:
+    environment: Staging
+    name: DeployStaging
     needs: build
     runs-on: ubuntu-18.04
     env:
@@ -70,5 +71,22 @@ jobs:
       uses: azure/webapps-deploy@v2
       with:
         app-name: tailwindtradersng327aivqywig
+        publish-profile: ${{ secrets.PUBLISH_PROFILE_STAGING }}
+        package: "./staging"
+  
+  deployProduction:
+    if: github.ref == 'refs/heads/main'
+    environment: Production
+    runs-on: ubuntu-18.04
+    env: 
+      CI: ""
+      
+    steps:
+    
+    - name: Deploy to Website
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: tailwindtradersng327aivqywig
         publish-profile: ${{ secrets.PUBLISH_PROFILE_PROD }}
         package: "./staging"
+    
