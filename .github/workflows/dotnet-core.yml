@@ -14,8 +14,8 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-18.04
+    if: github.ref != 'refs/heads/main'
     env:
       CI: ""
 
@@ -46,6 +46,7 @@ jobs:
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
     
   deployStaging:
+    if: github.ref == 'refs/heads/main'
     environment: Staging
     name: DeployStaging
     needs: build
@@ -67,8 +68,32 @@ jobs:
 
     - run: |
         cd Source/Tailwind.Traders.Web
-        docker build . -t ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }} -t tailwindtraders-app
-        docker push ttacrng327aivqywig.azurecr.io/tailwindtraders-app
+        docker build . -t ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
+        docker push ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
+
+    - name: Azure authentication
+      if: github.ref == 'refs/heads/main'
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS  }}
+  
+    - name: Deploy image to staging slot
+      if: github.ref == 'refs/heads/main'
+      uses: Azure/webapps-deploy@v2
+      with:
+        app-name: tailwindtradersng327aivqywig
+        slot-name: staging
+        images: ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
+
+    - name: Microsoft Teams Notification
+      # You may pin to the exact commit or the version.
+      # uses: jdcargile/ms-teams-notification@6cd2a73bccdb41eae6c3c99a8977c6bb5e09d77a
+      uses: jdcargile/ms-teams-notification@v1.3
+      with:
+        github-token: ${{ secrets.GH_TOKEN }}
+        ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
+        notification-summary: Deployment to Staging complete for http://tailwindtradersng327aivqywig-staging.azurewebsites.net. Confirm changes and proceed to promote changes to production.
+        notification-color: 28a745
   
   deployProduction:
     if: github.ref == 'refs/heads/main'
