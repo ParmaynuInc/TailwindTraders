@@ -1,4 +1,4 @@
-# Tailwind Traders Website
+# Tailwind Traders Websites
 
 ![Tailwind Traders Website](Documents/Images/Website.png)
 
@@ -25,7 +25,7 @@ With the following ARM template you can automate the creation of the resources f
 
 When you deploy this website to Azure you can define the [Backend](https://github.com/Microsoft/TailwindTraders-Backend) you want to use in case you have deploy your own backend. By defaults it is configured the public Backend environment provided by Microsoft.
 
-> Note: you can change the InstrumentationKey of the **Application Insight** that is configured by default.
+> Note:  you can change the InstrumentationKey of the **Application Insight** that is configured by default.
 
 # Deploy as part of AKS (Azure Kubernetes Service)
 
