@@ -1,0 +1,90 @@
+trigger:
+- main
+
+stages:
+- stage: Build
+  jobs:
+  - job: NotificationLight
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - checkout: none
+    - bash: |
+        curl -X POST "https://api.lifx.com/v1/lights/$(LifxId)/effects/breathe" \
+        -H "Authorization: Bearer $(LifxToken)" \
+        -H "content-type: application/json" \
+        -d '{"color": "#ff9900","from_color": "#ffaa00","period": 4,"cycles": 100,"persist": false,"power_on": true}'
+      displayName: Building Light
+
+  - job: BuildApplication
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - script: |
+        echo "Building application"
+        sleep 3
+        echo "Running tests"
+        sleep 3
+        echo "Reticulating splines"
+        sleep 3
+      displayName: Building application
+    - bash: |
+        echo "Inserting easter eggs"
+        sleep 1
+        echo "https://brdy.in/easter-egg" > build.txt
+        echo "https://brdy.in/easter-egg"
+        sleep 2
+      displayName: "https://brdy.in/easter-egg"
+    - task: PublishPipelineArtifact@1
+      inputs:
+        artifact: build
+        targetPath: "build.txt"
+        publishLocation: pipeline
+      displayName: "Upload artifacts"
+
+
+- stage: DeployTest
+  dependsOn: Build
+  jobs:
+  - deployment: DeployToTest
+    environment: TestServer
+    pool:
+      vmImage: ubuntu-latest
+    
+    strategy:
+      runOnce:
+        deploy:
+          steps:          
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: "build"
+              targetPath: "./artifacts"
+            displayName: "Download artifacts"
+          - bash: |
+              echo "Deploying application..."
+              sleep 6
+            displayName: "Deploying application to Test"
+
+  - job: NotificationLight
+    dependsOn: DeployToTest
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - bash: |
+        curl -X PUT "https://api.lifx.com/v1/lights/$(LifxId)/state" \
+        -H "Authorization: Bearer $(LifxToken)" \
+        -H "content-type: application/json" \
+        -d '{"color": "#00ff00","power": "on"}'
+      condition: succeeded()
+      displayName: Success Light
+
+    - bash: |
+        curl -X PUT "https://api.lifx.com/v1/lights/$(LifxId)/state" \
+        -H "Authorization: Bearer $(LifxToken)" \
+        -H "content-type: application/json" \
+        -d '{"color": "#ff0000","power": "on"}'
+      condition: failed()
+      displayName: Failure Light

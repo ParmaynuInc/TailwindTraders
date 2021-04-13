@@ -1,0 +1,89 @@
+# ASP.NET
+# Build and test ASP.NET projects.
+# Add steps that publish symbols, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
+
+trigger:
+- main123
+  
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+stages:
+- stage: build
+  jobs:
+  - job: BuildJob
+    
+    pool:
+      vmImage: 'windows-latest'
+
+    steps:
+    - bash: |
+        curl -X POST "https://api.lifx.com/v1/lights/$(LifxId)/effects/breathe" \
+        -H "Authorization: Bearer $(LifxToken)" \
+        -H "content-type: application/json" \
+        -d '{"color": "#ff9900","from_color": "#ffaa00","period": 4,"cycles": 100,"persist": false,"power_on": true}'
+      displayName: Building Light
+
+    - task: NuGetToolInstaller@1
+
+    - task: UseNode@1
+      inputs:
+        versionSpec: '10.x'
+
+    - task: NuGetCommand@2
+      inputs:
+        restoreSolution: '$(solution)'
+
+    - task: VSBuild@1
+      inputs:
+        solution: '$(solution)'
+        msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
+        platform: '$(buildPlatform)'
+        configuration: '$(buildConfiguration)'
+
+    # - task: VSTest@2
+    #   inputs:
+    #     platform: '$(buildPlatform)'
+    #     configuration: '$(buildConfiguration)'
+    
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(build.artifactStagingDirectory)/Tailwind.Traders.Web.zip'
+        artifact: 'Drop'
+        publishLocation: 'pipeline'
+    
+  - deployment: DeploymentJob
+    dependsOn: BuildJob
+    environment: TestEnvironment
+    pool:
+      vmImage: 'ubuntu-latest'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          # - task: AzureWebApp@1
+          #   inputs:
+          #     azureSubscription: 'ca-dabrady-demo-test(bc202ec2-54ef-4576-b7fb-a961c983398e)'
+          #     appType: 'webAppLinux'
+          #     appName: 'TailwindTraders-ADO40'
+          #     package: '$(Pipeline.Workspace)/**/Tailwind.Traders.Web.zip'
+          #     runtimeStack: 'DOTNETCORE|2.1'
+        
+          - bash: |
+              curl -X PUT "https://api.lifx.com/v1/lights/$(LifxId)/state" \
+              -H "Authorization: Bearer $(LifxToken)" \
+              -H "content-type: application/json" \
+              -d '{"color": "#00ff00","power": "on"}'
+            condition: succeeded()
+            displayName: Success Light
+
+          - bash: |
+              curl -X PUT "https://api.lifx.com/v1/lights/$(LifxId)/state" \
+              -H "Authorization: Bearer $(LifxToken)" \
+              -H "content-type: application/json" \
+              -d '{"color": "#ff0000","power": "on"}'
+            condition: failed()
+            displayName: Failure Light
