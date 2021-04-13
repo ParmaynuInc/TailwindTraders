@@ -44,12 +44,6 @@ jobs:
     
     - name: Publish
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
-
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: drop
-        path: "./Source/Tailwind.Traders.Web/staging"
     
   deployStaging:
     environment: Staging
@@ -61,32 +55,37 @@ jobs:
 
     steps:
 
-    - name: Download Artifact
-      uses: actions/download-artifact@v2
+    - uses: actions/checkout@v2
+    - name: Azure Container Registry Login
+      uses: Azure/docker-login@v1
       with:
-        name: drop
-        path: "./staging"
+        # Container registry username
+        username: ttacrng327aivqywig
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        login-server: ttacrng327aivqywig.azurecr.io
 
-    - name: Deploy to Website
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: tailwindtradersng327aivqywig
-        publish-profile: ${{ secrets.PUBLISH_PROFILE_STAGING }}
-        package: "./staging"
+
+    - run: |
+        cd Source/Tailwind.Traders.Web
+        docker build . -t ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }} -t tailwindtraders-app
+        docker push ttacrng327aivqywig.azurecr.io/tailwindtraders-app
   
   deployProduction:
     if: github.ref == 'refs/heads/main'
     environment: Production
+    name: DeployProduction
     runs-on: ubuntu-18.04
     env: 
       CI: ""
       
     steps:
-    
-    - name: Deploy to Website
-      uses: azure/webapps-deploy@v2
-      with:
-        app-name: tailwindtradersng327aivqywig
-        publish-profile: ${{ secrets.PUBLISH_PROFILE_PROD }}
-        package: "./staging"
+    - name: Azure authentication
+      uses: azure/login@v1
+      with:          
+        creds: ${{ secrets.AZURE_CREDENTIALS  }}
+      
+    - name: Swap staging to production
+      run: |
+        az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
+
     
