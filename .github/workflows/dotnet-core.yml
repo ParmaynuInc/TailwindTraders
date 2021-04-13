@@ -46,7 +46,6 @@ jobs:
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
     
   deployStaging:
-    if: github.ref == 'refs/heads/main'
     environment: Staging
     name: DeployStaging
     needs: build
@@ -98,6 +97,7 @@ jobs:
   deployProduction:
     if: github.ref == 'refs/heads/main'
     environment: Production
+    needs: deployStaging
     name: DeployProduction
     runs-on: ubuntu-18.04
     env: 
