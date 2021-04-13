@@ -65,6 +65,6 @@ jobs:
     - name: Deploy to Website
       uses: azure/webapps-deploy@v2
       with:
-        app-name: TailwindTraders-ADO40
+        app-name: tailwindtradersng327aivqywig
         publish-profile: ${{ secrets.PUBLISH_PROFILE_PROD }}
         package: "./staging"
