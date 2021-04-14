@@ -16,10 +16,11 @@ jobs:
       CI: ""
 
     steps:
-
+    
+    - uses: actions/checkout@v2
+    
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
-      if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
         github-token: ${{ secrets.GH_TOKEN }} 
@@ -32,7 +33,7 @@ jobs:
           - text: View Staging Website
             url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
 
-    - uses: actions/checkout@v2
+
     - name: Azure Container Registry Login
       uses: Azure/docker-login@v1
       with:
@@ -67,10 +68,10 @@ jobs:
       CI: ""
       
     steps:
-
+    - uses: actions/checkout@v2
+  
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
-      if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
         github-token: ${{ secrets.GH_TOKEN }} 
