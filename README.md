@@ -27,7 +27,7 @@ When you deploy this website to Azure you can define the [Backend](https://githu
 
 > Note:  you can change the InstrumentationKey of the **Application Insight** that is configured by default.
 
-# Deploy as part of AKS (Azure Kubernetes Service)
+# Deploy to AKS (Azure Kubernetes Service)
 
 Please follow these steps to deploy the web in the same AKS where Backend is running instead of deploying to an App Service.
 
