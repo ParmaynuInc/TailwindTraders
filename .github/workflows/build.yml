@@ -15,6 +15,14 @@ jobs:
 
     steps:
 
+    - name: Microsoft Teams Notification
+      uses: jdcargile/ms-teams-notification@v1.3
+      with:
+        github-token: ${{ secrets.GH_TOKEN }}
+        ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
+        notification-summary: Automated build in progress
+        notification-color: 007bff
+
     - uses: actions/checkout@v2
    
     - name: Setup .NET Core
@@ -39,6 +47,14 @@ jobs:
     - name: Publish
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
 
+    - name: Create Issue Action
+      if: ${{ failure() }}
+      uses: nashmaniac/create-issue-action@v1.1
+      with:
+        title: Build failed
+        token: ${{secrets.GH_TOKEN}}
+        assignees: ${{github.actor}}
+
     - name: Microsoft Teams Notification
       uses: jdcargile/ms-teams-notification@v1.3
       with:
@@ -46,3 +62,4 @@ jobs:
         ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
         notification-summary: Build Succeeded!
         notification-color: 28a745
+  
