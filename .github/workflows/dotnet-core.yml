@@ -25,9 +25,7 @@ jobs:
         github-token: ${{ secrets.GH_TOKEN }} 
         environment: staging
         card-layout-start: complete
-        card-layout-exit: complete
-        show-on-start: true
-        show-on-exit: true
+        card-layout-exit: cozy
         show-on-failure: true
         view-status-action-text: View staging deploy status
         custom-actions: |
@@ -77,10 +75,8 @@ jobs:
         github-token: ${{ secrets.GH_TOKEN }} 
         environment: production
         card-layout-start: complete
-        card-layout-exit: complete
+        card-layout-exit: cozy
         show-on-failure: true
-        show-on-start: true
-        show-on-exit: true
         view-status-action-text: View prod deployment status
         custom-actions: |
           - text: View Production Website
