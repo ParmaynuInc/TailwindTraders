@@ -10,7 +10,6 @@ on:
 jobs:
   deployStaging:
     environment: Staging
-    name: DeployStaging
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -62,7 +61,6 @@ jobs:
   deployProduction:
     environment: Production
     needs: deployStaging
-    name: DeployProduction
     runs-on: ubuntu-18.04
     env: 
       CI: ""
