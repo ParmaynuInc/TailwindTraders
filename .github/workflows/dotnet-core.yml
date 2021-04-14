@@ -17,6 +17,23 @@ jobs:
 
     steps:
 
+    - name: Microsoft Teams Deploy Card
+      uses: toko-bifrost/ms-teams-deploy-card@3.1.2
+      if: always()
+      with:
+        webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
+        github-token: ${{ secrets.GH_TOKEN }} 
+        environment: staging
+        card-layout-start: complete
+        card-layout-exit: compact
+        show-on-failure: true
+        view-status-action-text: View build/deploy status
+        custom-actions: |
+          - text: View Staging
+            url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
+          - text: View Run to Approve Production
+            url: "https://github.com/CharleneMcKeown/TailwindTraders/actions/runs/${{ github.run_id }}"
+
     - uses: actions/checkout@v2
     - name: Azure Container Registry Login
       uses: Azure/docker-login@v1
@@ -42,31 +59,6 @@ jobs:
         app-name: tailwindtradersng327aivqywig
         slot-name: staging
         images: ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
-
-    - name: Microsoft Teams Notification
-      uses: jdcargile/ms-teams-notification@v1.3
-      with:
-        github-token: ${{ secrets.GH_TOKEN }}
-        ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        notification-summary: Deployment to Staging complete for http://tailwindtradersng327aivqywig-staging.azurewebsites.net. Confirm changes and proceed to promote changes to production.
-        notification-color: 28a745
-  
-    - name: Microsoft Teams Deploy Card
-      uses: toko-bifrost/ms-teams-deploy-card@3.1.2
-      if: always()
-      with:
-        webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        github-token: ${{ secrets.GH_TOKEN }} 
-        environment: staging
-        card-layout-start: complete
-        card-layout-exit: compact
-        show-on-failure: true
-        view-status-action-text: View build/deploy status
-        custom-actions: |
-          - text: View Staging
-            url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
-          - text: View Run to Approve Production
-            url: "https://github.com/CharleneMcKeown/TailwindTraders/actions/runs/${{ github.run_id }}"
   
   deployProduction:
     environment: Production
@@ -77,18 +69,9 @@ jobs:
       CI: ""
       
     steps:
-    - name: Azure authentication
-      uses: azure/login@v1
-      with:          
-        creds: ${{ secrets.AZURE_CREDENTIALS  }}
-      
-    - name: Swap staging to production
-      run: |
-        az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
 
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
-      if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
         github-token: ${{ secrets.GH_TOKEN }} 
@@ -101,5 +84,14 @@ jobs:
         custom-actions: |
           - text: View Production
             url: "http://tailwindtradersng327aivqywig.azurewebsites.net"
-          - text: View Run
-            url: "https://github.com/CharleneMcKeown/TailwindTraders/actions/runs/${{ github.run_id }}"
+
+    - name: Azure authentication
+      uses: azure/login@v1
+      with:          
+        creds: ${{ secrets.AZURE_CREDENTIALS  }}
+      
+    - name: Swap staging to production
+      run: |
+        az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
+
+
