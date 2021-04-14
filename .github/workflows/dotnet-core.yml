@@ -6,14 +6,10 @@ on:
     paths-ignore:
     - ".github/workflows/**"
     - "*.yml"
-  pull_request:
-    branches: [ main ]
-    paths-ignore:
-    - ".github/workflows/**"
-    - "*.yml"
 
 jobs:
   build:
+    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -45,6 +41,7 @@ jobs:
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
     
   deployStaging:
+    if: github.ref != 'refs/heads/main'
     environment: Staging
     name: DeployStaging
     needs: build
