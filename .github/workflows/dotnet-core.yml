@@ -29,10 +29,8 @@ jobs:
         show-on-failure: true
         view-status-action-text: View build/deploy status
         custom-actions: |
-          - text: View Staging
+          - text: View Staging Website
             url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
-          - text: View Run to Approve Production
-            url: "https://github.com/CharleneMcKeown/TailwindTraders/actions/runs/${{ github.run_id }}"
 
     - uses: actions/checkout@v2
     - name: Azure Container Registry Login
@@ -82,7 +80,7 @@ jobs:
         view-status-action-text: View build/deploy status
         enable-view-status: true
         custom-actions: |
-          - text: View Production
+          - text: View Production Website
             url: "http://tailwindtradersng327aivqywig.azurewebsites.net"
 
     - name: Azure authentication
