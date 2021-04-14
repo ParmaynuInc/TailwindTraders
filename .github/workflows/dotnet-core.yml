@@ -78,7 +78,6 @@ jobs:
         card-layout-exit: compact
         show-on-failure: true
         view-status-action-text: View build/deploy status
-        enable-view-status: true
         custom-actions: |
           - text: View Production Website
             url: "http://tailwindtradersng327aivqywig.azurewebsites.net"
