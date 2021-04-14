@@ -2,13 +2,18 @@ name: .NET Core
 
 on:
   push:
+    branches: [ main ]
+    paths-ignore:
+    - ".github/workflows/**"
+    - "*.yml"
+  pull_request:
+    branches: [ main ]
     paths-ignore:
     - ".github/workflows/**"
     - "*.yml"
 
 jobs:
   build:
-    if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -40,9 +45,9 @@ jobs:
       run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
     
   deployStaging:
-    if: github.event == 'check_run'
     environment: Staging
     name: DeployStaging
+    needs: build
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -63,7 +68,6 @@ jobs:
         cd Source/Tailwind.Traders.Web
         docker build . -t ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
         docker push ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
-
     - name: Azure authentication
       uses: azure/login@v1
       with:
@@ -102,5 +106,3 @@ jobs:
     - name: Swap staging to production
       run: |
         az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
-
-    
