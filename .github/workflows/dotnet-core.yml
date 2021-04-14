@@ -1,4 +1,4 @@
-name: .NET Core
+name: Deploy .NET Core
 
 on:
   push:
@@ -8,43 +8,9 @@ on:
     - "*.yml"
 
 jobs:
-  build:
-    if: github.event == 'check_run'
-    runs-on: ubuntu-18.04
-    env:
-      CI: ""
-
-    steps:
-
-    - uses: actions/checkout@v2
-   
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 2.1.x
-   
-    - name: Setup Node
-      uses: actions/setup-node@v1
-      with:
-        node-version: 10.x
-   
-    - name: Install dependencies
-      run: dotnet restore ./Source/*.sln
-   
-    - name: Build
-      run: dotnet build ./Source/*.sln --configuration Release --no-restore
-   
-    - name: Test
-      run: dotnet test ./Source/*.sln --no-restore --verbosity normal
-    
-    - name: Publish
-      run: dotnet publish ./Source/Tailwind.Traders.Web/Tailwind.Traders.Web.csproj -c Release -o './staging'
-    
   deployStaging:
-    if: github.ref != 'refs/heads/main'
     environment: Staging
     name: DeployStaging
-    needs: build
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -86,7 +52,6 @@ jobs:
         notification-color: 28a745
   
   deployProduction:
-    if: github.ref == 'refs/heads/main'
     environment: Production
     needs: deployStaging
     name: DeployProduction
