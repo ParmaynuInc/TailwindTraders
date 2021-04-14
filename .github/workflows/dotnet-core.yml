@@ -25,9 +25,9 @@ jobs:
         github-token: ${{ secrets.GH_TOKEN }} 
         environment: staging
         card-layout-start: complete
-        card-layout-exit: compact
+        card-layout-exit: complete
         show-on-failure: true
-        view-status-action-text: View build/deploy status
+        view-status-action-text: View staging deploy status
         custom-actions: |
           - text: View Staging Website
             url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
@@ -70,14 +70,15 @@ jobs:
 
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
+      if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
         github-token: ${{ secrets.GH_TOKEN }} 
-        environment: staging
+        environment: production
         card-layout-start: complete
-        card-layout-exit: compact
+        card-layout-exit: complete
         show-on-failure: true
-        view-status-action-text: View build/deploy status
+        view-status-action-text: View prod deployment status
         custom-actions: |
           - text: View Production Website
             url: "http://tailwindtradersng327aivqywig.azurewebsites.net"
