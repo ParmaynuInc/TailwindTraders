@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    if: github.ref != 'refs/heads/main'
+    if: github.ref != 'refs/heads/main' && github.event == 'check_run'
     runs-on: ubuntu-18.04
     env:
       CI: ""
