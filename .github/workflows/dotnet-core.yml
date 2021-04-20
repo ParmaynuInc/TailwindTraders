@@ -27,7 +27,7 @@ jobs:
         environment: staging
         card-layout-start: complete
         card-layout-exit: cozy
-        show-on-failure: true
+        show-on-exit: true
         view-status-action-text: View staging deploy status
         custom-actions: |
           - text: View Staging Website
@@ -86,7 +86,7 @@ jobs:
         environment: production
         card-layout-start: complete
         card-layout-exit: cozy
-        show-on-failure: true
+        show-on-exit: true
         view-status-action-text: View prod deployment status
         custom-actions: |
           - text: View Production Website
