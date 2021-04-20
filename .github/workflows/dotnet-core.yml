@@ -58,14 +58,6 @@ jobs:
         app-name: tailwindtradersng327aivqywig
         slot-name: staging
         images: ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
-        
-    - name: Microsoft Teams Notification
-      uses: jdcargile/ms-teams-notification@v1.3
-      with:
-        github-token: ${{ secrets.GH_TOKEN }}
-        ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        notification-summary: Deployment to Staging succeeded. Changes can take two to three minutes to reflect in the web app. 
-        notification-color: 28a745
   
   deployProduction:
     environment: Production
@@ -100,12 +92,4 @@ jobs:
     - name: Swap staging to production
       run: |
         az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
-
-    - name: Microsoft Teams Notification
-      uses: jdcargile/ms-teams-notification@v1.3
-      with:
-        github-token: ${{ secrets.GH_TOKEN }}
-        ms-teams-webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        notification-summary: Deployment to Production succeeded! 
-        notification-color: 28a745
 
