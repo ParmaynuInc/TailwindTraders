@@ -10,6 +10,7 @@ on:
 jobs:
   deployStaging:
     environment: Staging
+      url: 'http://tailwindtradersng327aivqywig-staging.azurewebsites.net'
     runs-on: ubuntu-18.04
     env:
       CI: ""
@@ -61,7 +62,7 @@ jobs:
   
   deployProduction:
     environment: Production
-      url: 'http://tailwindtradersng327aivqywig-staging.azurewebsites.net'
+      url: 'http://tailwindtradersng327aivqywig.azurewebsites.net'
     needs: deployStaging
     runs-on: ubuntu-18.04
     env: 
