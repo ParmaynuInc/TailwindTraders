@@ -34,6 +34,7 @@ jobs:
   deployStaging:
     environment:
       name: Staging
+      needs: deployInfra
       url: 'http://${{ env.WEB }}-staging.azurewebsites.net'
     runs-on: ubuntu-18.04
     env:
