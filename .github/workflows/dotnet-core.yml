@@ -31,6 +31,7 @@ jobs:
             WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
             echo "$WEB" >> $GITHUB_ENV
             echo "WEB=$(echo $WEB)" >> $GITHUB_ENV
+            echo "WEB=$WEB" >> $GITHUB_ENV
     
   deployStaging:
     environment:
