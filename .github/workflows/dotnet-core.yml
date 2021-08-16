@@ -6,20 +6,42 @@ on:
     paths-ignore:
     - ".github/workflows/**"
     - "*.yml"
-
+env:
+  WEB: ''
+  
 jobs:
+  deployInfra:
+    name: deployInfra
+    runs-on: ubuntu-18.04
+    steps:
+    
+    - uses: actions/checkout@v2
+    - name: Azure Login
+      uses: Azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Azure CLI Action
+      uses: Azure/cli@1.0.4
+      with:
+        # Specify the script here
+        inlineScript: |
+            az group create -l westeurope -n TailwindTraders
+            WEB=$(az deployment group create -g deleteme -f ./Deploy/main.bicep)
+            WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
+            echo "WEB=$(echo $WEB" >> $GITHUB_ENV
+    
   deployStaging:
     environment:
       name: Staging
-      url: 'http://tailwindtradersng327aivqywig-staging.azurewebsites.net'
+      url: 'http://${{ env.WEB }}-staging.azurewebsites.net'
     runs-on: ubuntu-18.04
     env:
       CI: ""
 
     steps:
     
-    - uses: actions/checkout@v2
-    
+    - uses: actions/checkout@v2  
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
       if: always()
