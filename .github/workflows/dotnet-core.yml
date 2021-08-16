@@ -11,6 +11,8 @@ jobs:
   deployInfra:
     name: deployInfra
     runs-on: ubuntu-18.04
+    outputs:
+      web: ${{ steps.createInfra.outputs.web }}
     steps:
     
     - uses: actions/checkout@v2
@@ -20,6 +22,7 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
     - name: Azure CLI Action
+      id: createInfra
       uses: Azure/cli@1.0.4
       with:
         # Specify the script here
@@ -27,13 +30,13 @@ jobs:
             az group create -l westeurope -n TailwindTraders
             WEB=$(az deployment group create -g deleteme -f ./Deploy/main.bicep)
             WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
-            echo "WEB=$WEB" >> $GITHUB_ENV
+            echo "::set-output name=web::$WEB"
           
     
   deployStaging:
     environment:
       name: Staging
-      url: 'http://${{ env.WEB }}-staging.azurewebsites.net'
+      url: 'http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net'
     needs: deployInfra
     runs-on: ubuntu-18.04
     env:
