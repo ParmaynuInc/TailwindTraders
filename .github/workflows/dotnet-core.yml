@@ -61,6 +61,7 @@ jobs:
   
   deployProduction:
     environment: Production
+      url: 'http://tailwindtradersng327aivqywig-staging.azurewebsites.net'
     needs: deployStaging
     runs-on: ubuntu-18.04
     env: 
