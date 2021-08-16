@@ -29,7 +29,7 @@ jobs:
             az group create -l westeurope -n TailwindTraders
             WEB=$(az deployment group create -g deleteme -f ./Deploy/main.bicep)
             WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
-            echo "WEB=$(echo $WEB" >> $GITHUB_ENV
+            echo $WEB >> $GITHUB_ENV
     
   deployStaging:
     environment:
