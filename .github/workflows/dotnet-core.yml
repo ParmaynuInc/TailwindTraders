@@ -32,10 +32,11 @@ jobs:
             WEB=$(az deployment group create -g TailwindTraders -f ./Deploy/main.bicep)
             WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
             ACR=$(echo $ACR | jq -re .properties.outputs.acr.value)
+            KV=$(echo $KV | jq -re .properties.outputs.kv.value)
             echo "::set-output name=web::$WEB"
             echo "::set-output name=acr::$ACR"
-          
-    
+            echo "::set-output name=kv::$KV"
+
   deployStaging:
     environment:
       name: Staging
@@ -43,7 +44,7 @@ jobs:
     needs: deployInfra
     runs-on: ubuntu-18.04
     env:
-      CI: ""
+      acr_name: ${{ needs.deployInfra.outputs.web }}
 
     steps:
     
@@ -63,12 +64,19 @@ jobs:
           - text: View Staging Website
             url: "http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net"
 
+    - name: Azure key vault - Get Secrets
+      uses: Azure/get-keyvault-secrets@v1.2
+      with:
+        # Name of the azure key vault
+        keyvault: ${{ needs.deployInfra.outputs.kv }}
+        # Name of the secret to be fetched
+        secrets: 'acrPassword'
 
     - name: Azure Container Registry Login
       uses: Azure/docker-login@v1
       with:
         # Container registry username
-        username: ttacrng327aivqywig
+        username: ${{ env.acr_name }}
         password: ${{ secrets.DOCKER_PASSWORD }}
         login-server: ${{ needs.deployInfra.outputs.acr }}.azurecr.io
 
