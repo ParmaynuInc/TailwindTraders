@@ -70,7 +70,7 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
           value: 'https://${acr_name_var}.azurecr.io'
         }
         {
-          name: 'DOCKER_REGISTRY_PASSWORD'
+          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
           value: listCredentials(acr_name.id, acr_name.apiVersion).passwords[0].value
         }
         {
