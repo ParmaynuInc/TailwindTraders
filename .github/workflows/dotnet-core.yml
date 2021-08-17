@@ -31,10 +31,10 @@ jobs:
         inlineScript: |
             az group create -l westeurope -n TailwindTraders
             WEB=$(az deployment group create -g TailwindTraders -f ./Deploy/main.bicep)
-            WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
+            SITE=$(echo $WEB | jq -re .properties.outputs.web.value)
             ACR=$(echo $WEB | jq -re .properties.outputs.acr.value)
             KV=$(echo $WEB | jq -re .properties.outputs.kv.value)
-            echo "::set-output name=web::$WEB"
+            echo "::set-output name=web::$SITE"
             echo "::set-output name=acr::$ACR"
             echo "::set-output name=kv::$KV"
 
