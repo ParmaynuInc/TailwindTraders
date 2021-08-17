@@ -65,6 +65,7 @@ jobs:
             url: "http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net"
 
     - name: Azure key vault - Get Secrets
+      id: getSecrets
       uses: Azure/get-keyvault-secrets@v1.2
       with:
         # Name of the azure key vault
@@ -76,8 +77,8 @@ jobs:
       uses: Azure/docker-login@v1
       with:
         # Container registry username
-        username: ${{ env.acr_name }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+        username: ${{ needs.deployInfra.outputs.acr }}
+        password: ${{ steps.getSecrets.outputs.acrPassword }}
         login-server: ${{ needs.deployInfra.outputs.acr }}.azurecr.io
 
 
