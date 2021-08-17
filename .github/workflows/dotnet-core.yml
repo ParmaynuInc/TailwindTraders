@@ -6,13 +6,14 @@ on:
     paths-ignore:
     - ".github/workflows/**"
     - "*.yml"
-env:
-  WEB: ''
   
 jobs:
   deployInfra:
     name: deployInfra
     runs-on: ubuntu-18.04
+    outputs:
+      web: ${{ steps.createInfra.outputs.web }}
+      acr: ${{ steps.createInfra.outputs.acr }}
     steps:
     
     - uses: actions/checkout@v2
@@ -22,22 +23,28 @@ jobs:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
     
     - name: Azure CLI Action
+      id: createInfra
       uses: Azure/cli@1.0.4
       with:
         # Specify the script here
         inlineScript: |
             az group create -l westeurope -n TailwindTraders
-            WEB=$(az deployment group create -g deleteme -f ./Deploy/main.bicep)
+            WEB=$(az deployment group create -g TailwindTraders -f ./Deploy/main.bicep)
             WEB=$(echo $WEB | jq -re .properties.outputs.web.value)
-            echo "WEB=$(echo $WEB" >> $GITHUB_ENV
-    
+            ACR=$(echo $ACR | jq -re .properties.outputs.acr.value)
+            KV=$(echo $KV | jq -re .properties.outputs.kv.value)
+            echo "::set-output name=web::$WEB"
+            echo "::set-output name=acr::$ACR"
+            echo "::set-output name=kv::$KV"
+
   deployStaging:
     environment:
       name: Staging
-      url: 'http://${{ env.WEB }}-staging.azurewebsites.net'
+      url: 'http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net'
+    needs: deployInfra
     runs-on: ubuntu-18.04
     env:
-      CI: ""
+      acr_name: ${{ needs.deployInfra.outputs.web }}
 
     steps:
     
@@ -55,22 +62,30 @@ jobs:
         view-status-action-text: View staging deploy status
         custom-actions: |
           - text: View Staging Website
-            url: "http://tailwindtradersng327aivqywig-staging.azurewebsites.net"
+            url: "http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net"
 
+    - name: Azure key vault - Get Secrets
+      id: getSecrets
+      uses: Azure/get-keyvault-secrets@v1.2
+      with:
+        # Name of the azure key vault
+        keyvault: ${{ needs.deployInfra.outputs.kv }}
+        # Name of the secret to be fetched
+        secrets: 'acrPassword'
 
     - name: Azure Container Registry Login
       uses: Azure/docker-login@v1
       with:
         # Container registry username
-        username: ttacrng327aivqywig
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        login-server: ttacrng327aivqywig.azurecr.io
+        username: ${{ needs.deployInfra.outputs.acr }}
+        password: ${{ steps.getSecrets.outputs.acrPassword }}
+        login-server: ${{ needs.deployInfra.outputs.acr }}.azurecr.io
 
 
     - run: |
         cd Source/Tailwind.Traders.Web
-        docker build . -t ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
-        docker push ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
+        docker build . -t ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
+        docker push ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
     - name: Azure authentication
       uses: azure/login@v1
       with:
@@ -79,15 +94,15 @@ jobs:
     - name: Deploy image to staging slot
       uses: Azure/webapps-deploy@v2
       with:
-        app-name: tailwindtradersng327aivqywig
+        app-name: ${{ needs.deployInfra.outputs.web }}
         slot-name: staging
-        images: ttacrng327aivqywig.azurecr.io/tailwindtraders-app:${{ github.sha }}
+        images: ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
   
   deployProduction:
     environment:
       name: Production
-      url: 'http://tailwindtradersng327aivqywig.azurewebsites.net'
-    needs: deployStaging
+      url: 'http://${{ needs.deployInfra.outputs.web }}.azurewebsites.net'
+    needs: [deployStaging, deployInfra]
     runs-on: ubuntu-18.04
     env: 
       CI: ""
@@ -108,7 +123,7 @@ jobs:
         view-status-action-text: View prod deployment status
         custom-actions: |
           - text: View Production Website
-            url: "http://tailwindtradersng327aivqywig.azurewebsites.net"
+            url: "http://${{ needs.deployInfra.outputs.web }}.azurewebsites.net"
 
     - name: Azure authentication
       uses: azure/login@v1
@@ -117,5 +132,5 @@ jobs:
       
     - name: Swap staging to production
       run: |
-        az webapp deployment slot swap --name tailwindtradersng327aivqywig --resource-group AAA-Azure-rg --slot staging --target-slot production
+        az webapp deployment slot swap --name ${{ needs.deployInfra.outputs.web }} --resource-group TailwindTraders --slot staging --target-slot production
 
