@@ -82,7 +82,7 @@ jobs:
       uses: Azure/get-keyvault-secrets@v1.2
       with:
         # Name of the azure key vault
-        keyvault: ${{ needs.deployInfra.outputs.web }}
+        keyvault: ${{ needs.deployInfra.outputs.kv }}
         # Name of the secret to be fetched
         secrets: 'acrPassword'
 
