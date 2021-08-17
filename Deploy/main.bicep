@@ -12,7 +12,7 @@ var acr_name_var = 'ttacr${uniqueString(resourceGroup().id)}'
 var deployment_slot_name = 'staging'
 var acr_password_var = 'acrPassword'
 var keyvault_name_var = 'ttkv${uniqueString(resourceGroup().id)}'
-var objectId = 'dbf25855-474d-47da-aab1-d9a6a1e34bd1'
+var objectId = '7567ff67-3589-4cd6-a42c-9a6e8cb60e0f'
 
 resource acr_name 'Microsoft.ContainerRegistry/registries@2017-10-01' = {
   name: acr_name_var
