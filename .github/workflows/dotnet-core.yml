@@ -44,6 +44,8 @@ jobs:
       url: 'http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net'
     needs: deployInfra
     runs-on: ubuntu-18.04
+    env: 
+      kv_name: ${{ needs.deployInfra.outputs.kv }}
 
     steps:
     
@@ -73,7 +75,7 @@ jobs:
       uses: Azure/get-keyvault-secrets@v1.2
       with:
         # Name of the azure key vault
-        keyvault: "${{ needs.deployInfra.outputs.kv }}"
+        keyvault: ${{ env.kv_name }}
         # Name of the secret to be fetched
         secrets: 'acrPassword'
 
