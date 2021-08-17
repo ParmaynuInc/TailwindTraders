@@ -59,6 +59,28 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
   name: deployment_slot_name
   location: resourceGroup().location
   properties:{
+    siteConfig: {
+      appSettings: [
+        {
+          name: 'WEBSITES_ENABLE_APP_SERVICE_STORAGE'
+          value: 'false'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_URL'
+          value: dockerRegistryUrl
+        }
+        {
+          name: 'ApiUrl'
+          value: '${apiBaseUrl}/webbff/v1'
+        }
+        {
+          name: 'ApiUrlShoppingCart'
+          value: '${apiBaseUrl}/cart-api'
+        }
+      ]
+      appCommandLine: ''
+      linuxFxVersion: 'DOCKER|${dockerimage}'
+    }
     enabled: true
     serverFarmId: plan_name.id
   }
