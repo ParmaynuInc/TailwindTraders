@@ -49,6 +49,13 @@ jobs:
 
     steps:
     
+    - name: CheckEnv
+      run: | 
+        echo ${{ needs.deployInfra.outputs.kv }}
+        echo ${{ needs.deployInfra.outputs.web }}
+        echo ${{ needs.deployInfra.outputs.acr }}
+        env | sort
+    
     - uses: actions/checkout@v2  
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
