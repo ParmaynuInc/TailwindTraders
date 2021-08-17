@@ -10,6 +10,9 @@ var website_name_var = 'tailwindtraders${uniqueString(resourceGroup().id)}'
 var plan_name_var = 'ttappserviceplan${uniqueString(resourceGroup().id)}'
 var acr_name_var = 'ttacr${uniqueString(resourceGroup().id)}'
 var deployment_slot_name = 'staging'
+var acr_password_var = 'acrPassword'
+var keyvault_name_var = 'ttkv${uniqueString(resourceGroup().id)}'
+var objectId = 'dbf25855-474d-47da-aab1-d9a6a1e34bd1'
 
 resource acr_name 'Microsoft.ContainerRegistry/registries@2017-10-01' = {
   name: acr_name_var
@@ -78,5 +81,43 @@ resource plan_name 'Microsoft.Web/serverfarms@2016-09-01' = {
   }
 }
 
+resource keyvault 'Microsoft.KeyVault/vaults@2016-10-01' = {
+  name: keyvault_name_var
+  location: resourceGroup().location
+  properties: {
+  accessPolicies: [
+    {
+      objectId: objectId
+      tenantId: subscription().tenantId
+      permissions: {
+        keys: []
+        secrets: [
+          'set'
+          'get'
+          'list'
+        ]
+      }
+    }
+  ]
+    sku: {
+      family: 'A'
+      name: 'standard'
+    }
+    tenantId: subscription().tenantId
+    
+  }
+}
+
+resource kv_secret 'Microsoft.KeyVault/vaults/secrets@2016-10-01' = {
+  name: '${keyvault_name_var}/${acr_password_var}'
+  properties: {
+    value: listCredentials(acr_name.id, acr_name.apiVersion).passwords[0].value
+  }
+  dependsOn: [
+    acr_name
+  ]
+}
+
 output web string = website_name_var
 output acr string = acr_name_var
+output kv string = keyvault_name_var
