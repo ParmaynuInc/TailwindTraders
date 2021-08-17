@@ -64,6 +64,11 @@ jobs:
           - text: View Staging Website
             url: "http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net"
 
+    - name: Azure Login
+      uses: Azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
     - name: Azure key vault - Get Secrets
       id: getSecrets
       uses: Azure/get-keyvault-secrets@v1.2
