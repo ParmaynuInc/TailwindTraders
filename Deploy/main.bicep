@@ -67,7 +67,7 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: dockerRegistryUrl
+          value: 'https://${acr_name_var}.azurecr.io'
         }
         {
           name: 'ApiUrl'
