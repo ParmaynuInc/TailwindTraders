@@ -70,6 +70,14 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
           value: 'https://${acr_name_var}.azurecr.io'
         }
         {
+          name: 'DOCKER_REGISTRY_PASSWORD'
+          value: listCredentials(acr_name.id, acr_name.apiVersion).passwords[0].value
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+          value: acr_name_var
+        }
+        {
           name: 'ApiUrl'
           value: '${apiBaseUrl}/webbff/v1'
         }
@@ -80,11 +88,15 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
       ]
       appCommandLine: ''
       linuxFxVersion: 'DOCKER|${dockerimage}'
+      
     }
     enabled: true
     serverFarmId: plan_name.id
   }
   parent: website_name
+  dependsOn: [
+    acr_name
+  ]
 }
 
 resource plan_name 'Microsoft.Web/serverfarms@2016-09-01' = {
