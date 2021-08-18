@@ -2,7 +2,6 @@
 
 You will need:
 
-<<<<<<< HEAD
 1. An Azure subscription (free trial is fine)
 1. A GitHub account
 1. Command line with az cli installed, or use [Azure Cloud Shell](http://shell.azure.com/)
@@ -92,6 +91,3 @@ We are deploying:
 1. Azure Container Registry to host the Tailwind Trader application image
 1. Azure Key Vault to store the password for the container registry
 
-=======
-# Deploy to Azure
->>>>>>> fedae7a4e88581030eb5edc65ab03c387a3d2b97
