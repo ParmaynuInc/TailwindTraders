@@ -2,8 +2,6 @@ param sku string = 'Standard'
 param skuCode string = 'S1'
 param registrySku string = 'Standard'
 param workerSize int = 1
-param dockerRegistryUrl string = 'https://index.docker.io'
-param dockerimage string = 'msfttailwindtraders/tailwindtraderswebsite:latest'
 param apiBaseUrl string = 'https://backend.tailwindtraders.com/'
 
 var website_name_var = 'tailwindtraders${uniqueString(resourceGroup().id)}'
@@ -37,7 +35,15 @@ resource website_name 'Microsoft.Web/sites@2018-02-01' = {
         }
         {
           name: 'DOCKER_REGISTRY_SERVER_URL'
-          value: dockerRegistryUrl
+          value: 'https://${acr_name_var}.azurecr.io'
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_PASSWORD'
+          value: listCredentials(acr_name.id, acr_name.apiVersion).passwords[0].value
+        }
+        {
+          name: 'DOCKER_REGISTRY_SERVER_USERNAME'
+          value: acr_name_var
         }
         {
           name: 'ApiUrl'
@@ -49,7 +55,6 @@ resource website_name 'Microsoft.Web/sites@2018-02-01' = {
         }
       ]
       appCommandLine: ''
-      linuxFxVersion: 'DOCKER|${dockerimage}'
     }
     serverFarmId: plan_name.id
   }
@@ -87,7 +92,6 @@ resource deployment_slot 'Microsoft.Web/sites/slots@2021-01-15' = {
         }
       ]
       appCommandLine: ''
-      linuxFxVersion: 'DOCKER|${dockerimage}'
       
     }
     enabled: true
