@@ -28,7 +28,6 @@ jobs:
       id: createInfra
       uses: Azure/cli@1.0.4
       with:
-        # Specify the script here
         inlineScript: |
             az group create -l westeurope -n TailwindTraders
             WEB=$(az deployment group create -g TailwindTraders -f ./Deploy/main.bicep)
@@ -45,19 +44,8 @@ jobs:
       url: 'http://${{ needs.deployInfra.outputs.web }}-staging.azurewebsites.net'
     needs: deployInfra
     runs-on: ubuntu-18.04
-    env: 
-      kv_name: ${{ needs.deployInfra.outputs.kv }}
 
-    steps:
-    
-    - name: CheckEnv
-      run: | 
-        echo ${{ needs.deployInfra.outputs.kv }}
-        echo ${{ needs.deployInfra.outputs.web }}
-        echo ${{ needs.deployInfra.outputs.acr }}
-        env | sort
-    
-    - uses: actions/checkout@v2  
+    steps:     
     - name: Microsoft Teams Deploy Card
       uses: toko-bifrost/ms-teams-deploy-card@3.1.2
       if: always()
@@ -82,57 +70,55 @@ jobs:
       id: getSecrets
       uses: Azure/get-keyvault-secrets@v1.2
       with:
-        # Name of the azure key vault
         keyvault: ${{ needs.deployInfra.outputs.kv }}
-        # Name of the secret to be fetched
         secrets: 'acrPassword'
 
     - name: Azure Container Registry Login
       uses: Azure/docker-login@v1
       with:
-        # Container registry username
         username: ${{ needs.deployInfra.outputs.acr }}
         password: ${{ steps.getSecrets.outputs.acrPassword }}
         login-server: ${{ needs.deployInfra.outputs.acr }}.azurecr.io
 
-
     - run: |
         cd Source/Tailwind.Traders.Web
-        docker build . -t ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
-        docker push ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
-    - name: Azure authentication
-      uses: azure/login@v1
-      with:
-        creds: ${{ secrets.AZURE_CREDENTIALS  }}
+        docker build . -t ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:latest
+        docker push ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:latest
+
+    # - name: Azure authentication
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_CREDENTIALS  }}
   
-    - name: Set Web App ACR authentication
-      uses: Azure/appservice-settings@v1
-      with:
-        app-name: ${{ needs.deployInfra.outputs.web }}
-        app-settings-json: |
-          [
-           {
-               "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
-               "value": "${{ steps.getSecrets.outputs.acrPassword }}",
-               "slotSetting": false
-           },
-           {
-               "name": "DOCKER_REGISTRY_SERVER_URL",
-               "value": "${{ needs.deployInfra.outputs.acr }}.azurecr.io",
-               "slotSetting": false
-           },
-           {
-               "name": "DOCKER_REGISTRY_SERVER_USERNAME",
-               "value": "${{ needs.deployInfra.outputs.acr }}",
-               "slotSetting": false
-           }
-          ]
+    # - name: Set Web App ACR authentication
+    #   uses: Azure/appservice-settings@v1
+    #   with:
+    #     app-name: ${{ needs.deployInfra.outputs.web }}
+    #     app-settings-json: |
+    #       [
+    #        {
+    #            "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+    #            "value": "${{ steps.getSecrets.outputs.acrPassword }}",
+    #            "slotSetting": false
+    #        },
+    #        {
+    #            "name": "DOCKER_REGISTRY_SERVER_URL",
+    #            "value": "${{ needs.deployInfra.outputs.acr }}.azurecr.io",
+    #            "slotSetting": false
+    #        },
+    #        {
+    #            "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+    #            "value": "${{ needs.deployInfra.outputs.acr }}",
+    #            "slotSetting": false
+    #        }
+    #       ]
+
     - name: Deploy image to staging slot
       uses: Azure/webapps-deploy@v2
       with:
         app-name: ${{ needs.deployInfra.outputs.web }}
         slot-name: staging
-        images: ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:${{ github.sha }}
+        images: ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:latest
   
   deployProduction:
     environment:
