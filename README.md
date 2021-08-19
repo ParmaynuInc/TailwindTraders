@@ -14,6 +14,10 @@ You will need:
 
 ## Setup Teams
 
+Create two new connectors for your target Microsoft Teams channel.
+
+1. Incoming Webhook - see [here](https://techcommunity.microsoft.com/t5/microsoft-365-pnp-blog/how-to-configure-and-use-incoming-webhooks-in-microsoft-teams/ba-p/2051118) for instructions. Make sure you save the webhook uri to your text editor. 
+2. GitHub Connector - see [here](https://github.com/integrations/microsoft-teams) for instructions. 
 
 
 ## Generate secrets
@@ -58,14 +62,17 @@ In order to deploy and access Azure resources, we need an identity that has the 
 
 We now need to do some configuration in GitHub. 
 
-1. Generate a GitHub Personal Access Token on the [developer settings](https://github.com/settings/tokens) page in GitHub. Make sure it has admin:repo_hook permissions. Copy and paste it into your text editor. 
 1. In the repo, navigate to Settings > Secrets. 
 1. Add a new secret called AZURE_CREDENTIALS, and paste in the JSON object you modified earlier in your text editor. Save it.
-1. Add another secret called GH_TOKEN, and paste in the GitHub token you just created.
-1. Add one last secret called TEAMS_WEBHOOK, and paste in the webhook you saved earlier. Save it. 
+1. Add another secret called TEAMS_WEBHOOK, and paste in the webhook you saved earlier. Save it. 
 
 ## GitHub Environments
 
+1. In your repo, navigate to Settings > Environments.
+1. Create a new environment called Staging. 
+1. Create another new environment called Production. Make sure you add an approver (it can be yourself) and set the deployment branch to main. This ensures that only the main branch can ever be deployed to our production environment. It should look like this:
+
+![Environments](/Documents/Images/envs.PNG)
 
 ## Update Source code
 
@@ -79,15 +86,88 @@ We now need to do some configuration in GitHub.
     ```
 This should trigger the GitHub workflow to build and deploy the application! So what's actually happening? 
 
-## Azure Bicep
+### Azure Bicep
 
-blurb about Bicep
+Azure Bicep is used to declare what our resources should look like, including dependencies and configuration. Bicep is deploying:
 
-We are deploying:
+### Azure Web App with two slots - Production and Staging
 
-1. App Service Plan
-1. Web App for Containers
-1. Extra deployment slot for our web app
-1. Azure Container Registry to host the Tailwind Trader application image
-1. Azure Key Vault to store the password for the container registry
+The application is a sample front end web store - Tailwind Traders. We are utilising a pre-created backend that is managed by Microsoft, and the app itself will be hosted on a Web App for Containers (Linux) app service plan. 
 
+The web app has two deployment slots - one for staging, where we can deploy and observe the change, and one for production. When we're happy with the change, we can initiate a swap slot, which is seamless to users of the website.
+
+### Azure Container Registry
+
+We need to package the application and build it into a container image using Docker - so we need somewhere to host it - Azure Container Registry! As we will be pushing to the registry the newly created container image, we obviously need somewhere to securely store the password to the registry once it has been created.
+
+### Azure Key Vault to store secrets
+
+Azure Key Vault is the place where we will put the secret - we can securely access it later during deployments.
+
+Okay, after reading all that - your app has probably deployed! Navigate to the **Actions** tab in your repo. You should see a deployment either in progress or finished. Click on it. 
+
+You should see something like this if it's still in progress:
+
+![Actions](/Documents/Images/actions.PNG)
+
+Feel free to click it and have a look at the logs. When it is green, you should have an approval waiting:
+
+![Actions](/Documents/Images/approval.PNG)
+
+Here you can see that the Staging environment actually has a URL - click on that, and you should see the Tailwind Traders website has been deployed. Go ahead and approve Production by clicking on **Review Deployments**.
+
+Meanwhile, over in Microsoft Teams, you might have noticed some notifcations:
+
+![Teams](/Documents/Images/teams.PNG)
+
+The incoming webhook you created earlier is getting used by a marketplace GitHub Action in the pipeline:
+
+```
+- name: Microsoft Teams Deploy Card
+    uses: toko-bifrost/ms-teams-deploy-card@3.1.2
+    if: always()
+    with:
+    webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
+    github-token: ${{ secrets.GH_TOKEN }} 
+    environment: production
+    card-layout-start: complete
+    card-layout-exit: cozy
+    show-on-exit: true
+    view-status-action-text: View prod deployment status
+    custom-actions: |
+        - text: View Production Website
+        url: "http://${{ needs.deployInfra.outputs.web }}.azurewebsites.net"
+```
+
+It uses the card feature in teams, and passes some useful information for us, like:
+
+1. environment
+1. status
+1. website url to check
+
+So it is easy to see the status of a deployment without having to go directly to GitHub. 
+
+## Branch protection
+
+Lastly, the point of this exercise to make sure that deployments are done safely. To ensure that no changes make it out to production, we need to set up some branch policies to protect main.
+
+That is really all you need. To demo this:
+
+1. Create a new branch off main
+1. Edit: **/Source/Tailwind.Traders.Web/ClientApp/src/assets/locales/translation.json** to a new price.
+1. Open a Pull Request into main
+1. Observe your Actions tab - you will see that the build.yml pipeline is building and testing the application. 
+1. Once it passes, complete the merge.
+1. Observe the deployment pipeline and Teams notifications as it moves through the environments.
+
+A few notes..
+
+This is demo code and not recommended for actual production scenarios. One reason is that we're running the Bicep deployment every time we push changes to the website. This is dangerous! We're doing it here to make it easy for you to create the Azure resources with as few steps as possible, and to show you how easy it is to grab outputs from one step, and pass them to steps in downstream jobs - as well as showing off the nifty capabilities of environments and urls.
+
+If this was real life, the website would likely face downtime during the Bicep deployment. The nice thing about using deployment slot swaps to perform the change means that users won't be impacted at all - the site will remain available throughout. 
+
+Another reason - you will notice that every time we push a new version of our application to the container registry, we give it the tag:latest. This is not best practice. Ideally you would link the image to the build, and use something like ${{ github.sha }} instead. Unfortunately, as we are running the Bicep step every time we deploy, this won't work. 
+
+>Side Note: Bicep doesn't yet have the ability to ignore changes to certain fields like Terraform does with lifecycle_ignore.
+
+Hope you found this useful!
