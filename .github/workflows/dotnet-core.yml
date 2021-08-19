@@ -54,7 +54,7 @@ jobs:
       if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        github-token: ${{ secrets.GH_TOKEN }} 
+        github-token: ${{ github.token }} 
         environment: staging
         card-layout-start: complete
         card-layout-exit: cozy
@@ -88,34 +88,6 @@ jobs:
         docker build . -t ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:latest
         docker push ${{ needs.deployInfra.outputs.acr }}.azurecr.io/tailwindtraders-app:latest
 
-    # - name: Azure authentication
-    #   uses: azure/login@v1
-    #   with:
-    #     creds: ${{ secrets.AZURE_CREDENTIALS  }}
-  
-    # - name: Set Web App ACR authentication
-    #   uses: Azure/appservice-settings@v1
-    #   with:
-    #     app-name: ${{ needs.deployInfra.outputs.web }}
-    #     app-settings-json: |
-    #       [
-    #        {
-    #            "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
-    #            "value": "${{ steps.getSecrets.outputs.acrPassword }}",
-    #            "slotSetting": false
-    #        },
-    #        {
-    #            "name": "DOCKER_REGISTRY_SERVER_URL",
-    #            "value": "${{ needs.deployInfra.outputs.acr }}.azurecr.io",
-    #            "slotSetting": false
-    #        },
-    #        {
-    #            "name": "DOCKER_REGISTRY_SERVER_USERNAME",
-    #            "value": "${{ needs.deployInfra.outputs.acr }}",
-    #            "slotSetting": false
-    #        }
-    #       ]
-
     - name: Deploy image to staging slot
       uses: Azure/webapps-deploy@v2
       with:
@@ -140,7 +112,7 @@ jobs:
       if: always()
       with:
         webhook-uri: ${{ secrets.TEAMS_WEBHOOK }}
-        github-token: ${{ secrets.GH_TOKEN }} 
+        github-token: ${{ github.token }} 
         environment: production
         card-layout-start: complete
         card-layout-exit: cozy
